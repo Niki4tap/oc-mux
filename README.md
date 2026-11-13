@@ -1,10 +1,11 @@
-<div style="display: flex; flex-direction: row; justify-content: space-between; min-width: 100%; width: 100%; height: 3em">
-	<h1 style="border: 0; align-self: bottom;">mux</h1>
-	<img
-		style="height: 40px"
+<h1>
+	mux
+	<a href="https://0rwx.com"><img
+		align="right"
+		style="height: 40px;"
 		src="https://0rwx.com/static/AI-W-dark.png"
-	/>
-</div>
+	/></a>
+</h1>
 
 ---
 
