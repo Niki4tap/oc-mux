@@ -7,8 +7,6 @@
 	/></a>
 </h1>
 
----
-
 ![Preview](./misc/image.png)
 
 A tmux-like terminal multiplexer for OpenComputers (on OpenOS).
