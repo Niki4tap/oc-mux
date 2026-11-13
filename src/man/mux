@@ -1,0 +1,111 @@
+NAME
+  mux - tmux-like terminal multiplexer for OpenComputers (on OpenOS)
+
+SYNOPSIS
+  mux [attach | new CMD... | list | kill-session]
+
+DESCRIPTION
+  `mux` runs one terminal session that holds many terminal panes, and lets you
+  detach from it and re-attach from any terminal on the same machine. Programs
+  in the panes keep running (they keep producing output and pumping every event
+  except the keyboard) while no client is attached, and are waiting for you when
+  you attach again.
+
+  There is exactly one session per machine; it lives in the machine's Lua heap
+  under the global `_G.mux_session`. Only one client can be attached at a time.
+  Running `mux` in a second terminal steals the screen from the first: the old
+  client prints "terminal was taken over" and exits.
+
+  Each pane runs a full shell (or the command you asked for) in its own process,
+  confined to its own region of the screen. Both line-based programs (that use
+  tty/term) and programs that talk to the GPU directly are clipped to the pane's
+  bounds. Mouse input (touch/drag/drop/scroll) is mapped to whichever pane
+  covers the clicked point, so mouse applications work per-pane.
+
+  A session is a set of windows; each window is a binary split tree of panes.
+  `mux` composites the panes onto the physical screen and draws a status line
+  along the bottom row. While attached, `^B` is the command prefix (like tmux's
+  `^A`/`^B`): the status line shows `mux+` while a prefix is armed.
+
+COMMANDS
+  attach
+    Attach to the session, creating it (with one shell pane) if it is missing.
+    This is the default: a bare `mux` does the same thing.
+
+  new CMD...
+    Run CMD in a new window. If no session exists, a new one is created running
+    CMD and "session created" is printed; otherwise CMD opens as an extra window
+    in the existing session.
+
+  list
+    List the windows of the running session as `<n>: <title> (<p> pane(s))`,
+    marking the active one with `[active]`. Fails if no session is running.
+
+  kill-session
+    End the session and free all panes and their video buffers. Safe to run
+    while a client is pumping: that client notices the session is gone.
+
+  --help
+    Print a short usage summary and the command keys, then exit.
+
+COMMAND KEYS (after the ^B prefix)
+  %              split the active pane into left and right halves
+  "              split the active pane into top and bottom halves
+  x              kill the active pane
+  &              kill the active window (all its panes)
+  c              new window (shell)
+  n / p          next / previous window
+  0-9            jump to a window (0 selects window 1, tmux style)
+  o              cycle the active pane within the current window
+  h j k l        focus the pane to the left / down / up / right
+  arrows         resize the active pane's split
+  z              toggle zoom (the active pane fills the whole work area)
+  w              rename the window (a `title:` prompt appears on the status line)
+  d              detach: the client quits, but the session and every pane keep running
+  q              kill the session and exit
+  ^B             cancel the prefix
+  ^C             send an interrupt to the active pane
+
+  A split needs the pane to be at least 3 cells wide or tall and enough free
+  video memory; if not, `mux` reports the reason on the status line. Splitting
+  inside a zoomed window un-zooms it first, like tmux.
+
+STATUS LINE
+  The bottom row shows, from left to right: the `mux`/`mux+` hint, the list of
+  windows (`n:title`, the active one highlighted), and on the right an optional
+  `[zoom]` marker, the clock, the screen size, and free machine memory and free
+  video memory as percentages. Each memory percentage is green over 50%, yellow
+  over 25%, red below that. When there are more windows than fit they are
+  truncated with `...`, but the selected window is always kept visible. Any
+  session error (for example running out of video memory) is shown as `! ...`
+  for a few seconds.
+
+NOTES
+  Detaching (or the attached `mux` process dying for any reason other than the
+  machine rebooting) leaves the panes running: a watchdog re-parents their
+  wake-ups to the init process so they never freeze, and they start receiving
+  every signal except keyboard input until you attach again.
+
+  `mux` keeps its own modifier-key state because the keyboard handler that
+  OpenOS's boot script registers only runs under init; this is what lets the
+  `^B` prefix arm and what lets a pane read `^D` as end-of-file.
+
+  There is no scrollback buffer (panes show only their live screen), only one
+  session per machine and one attached client at a time, and no `mux`-inside-`mux`
+  protection.
+
+EXAMPLES
+  mux
+    Attach to the session, starting it if there isn't one yet.
+
+  mux new edit /tmp/log
+    Open `edit /tmp/log` in a new window (creating the session if needed).
+
+  mux list
+    Show the windows of the running session.
+
+  ^B %
+    While attached, split the active pane left and right.
+
+  ^B d
+    Detach, leaving every pane running for a later `mux` to re-attach to.

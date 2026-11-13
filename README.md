@@ -17,10 +17,20 @@ machine.
 
 ## Install
 
-Copy two files into the machine's filesystem (Floppy/Disk):
+### Setup script
+
+```
+wget https://raw.githubusercontent.com/Niki4tap/oc-mux/master/setup.sh /tmp/setup.sh
+sh < /tmp/setup.sh
+rm /tmp/setup.sh
+```
+### Manual install
+
+Copy files into the machine's filesystem (Floppy/Disk):
 ```
 src/bin/mux.lua		->	[/usr]/bin/mux
 src/lib/muxd.lua	->	[/usr]/lib/muxd.lua
+src/man/mux			->	/usr/man/mux
 ```
 
 ## Usage
